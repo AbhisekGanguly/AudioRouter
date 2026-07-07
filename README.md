@@ -12,7 +12,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.4+-blue?logo=apple" alt="macOS 14.4+">
   <img src="https://img.shields.io/badge/Swift-5.10-orange?logo=swift" alt="Swift 5.10">
-  <img src="https://img.shields.io/github/v/release/AbhisekGanguly/AudioRouter?color=green" alt="Latest release">
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT license">
 </p>
 
