@@ -55,7 +55,7 @@ One-time setup (uses an [app-specific password](https://support.apple.com/en-us/
 
 ```sh
 xcrun notarytool store-credentials AudioRouter \
-  --apple-id abhisek@gangulyconsulting.com \
+  --apple-id <your-apple-id-email> \
   --team-id TEAMID \
   --password <app-specific-password>
 ```
