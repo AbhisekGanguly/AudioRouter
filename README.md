@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.png" width="420" alt="AudioRouter menu bar popover">
+  <img src="assets/info.png" width="420" alt="AudioRouter menu bar popover">
 </p>
 
 ---
@@ -25,7 +25,7 @@
 macOS lets you pick **one** output device for everything. AudioRouter removes that limit: assign each app its own speaker, headphones, USB DAC, or AirPlay device, straight from the menu bar — no kernel extensions, no virtual audio drivers, no configuration files. It's built on Apple's modern Core Audio *process tap* API (macOS 14.4+).
 
 <p align="center">
-  <img src="assets/info.png" width="420" alt="AudioRouter menu bar popover">
+  <img src="assets/screenshot.png" width="420" alt="AudioRouter menu bar popover">
 </p>
 
 ## Features
