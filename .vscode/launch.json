@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:audio}",
+            "name": "Debug AudioRouter",
+            "target": "AudioRouter",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug AudioRouter"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:audio}",
+            "name": "Release AudioRouter",
+            "target": "AudioRouter",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release AudioRouter"
+        }
+    ]
+}
