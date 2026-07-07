@@ -11,7 +11,7 @@ cask "audiorouter" do
   desc "Route each app's audio to a different output device"
   homepage "https://github.com/AbhisekGanguly/AudioRouter"
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "AudioRouter.app"
 

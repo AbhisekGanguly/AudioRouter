@@ -39,6 +39,7 @@ macOS lets you pick **one** output device for everything. AudioRouter removes th
 
 ```sh
 brew tap abhisekganguly/tap
+brew trust abhisekganguly/tap   # Homebrew 6+ only; skip on older versions
 HOMEBREW_CASK_OPTS=--no-quarantine brew install --cask audiorouter
 ```
 
