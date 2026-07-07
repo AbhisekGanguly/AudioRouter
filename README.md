@@ -39,10 +39,10 @@ macOS lets you pick **one** output device for everything. AudioRouter removes th
 
 ```sh
 brew tap abhisekganguly/tap
-brew install --cask --no-quarantine audiorouter
+HOMEBREW_CASK_OPTS=--no-quarantine brew install --cask audiorouter
 ```
 
-> `--no-quarantine` skips Gatekeeper's "unverified developer" warning — AudioRouter is open source but not notarized (no Apple Developer subscription). Omit the flag if you prefer to approve the app manually via System Settings.
+> `--no-quarantine` skips Gatekeeper's "unverified developer" warning — AudioRouter is open source but not notarized (no Apple Developer subscription). Homebrew 6 removed the CLI flag, so it's passed via `HOMEBREW_CASK_OPTS` (works on older Homebrew too). Omit it if you prefer to approve the app manually via System Settings.
 
 ### Manual download
 

@@ -22,8 +22,8 @@ cask "audiorouter" do
 
   caveats <<~EOS
     AudioRouter is open source but not notarized. If you installed without
-    --no-quarantine, macOS will block the first launch: approve it under
-    System Settings > Privacy & Security > "Open Anyway".
+    HOMEBREW_CASK_OPTS=--no-quarantine, macOS will block the first launch:
+    approve it under System Settings > Privacy & Security > "Open Anyway".
 
     On first route, macOS asks for System Audio Recording permission —
     required to capture an app's audio and redirect it.
