@@ -64,6 +64,10 @@ HOMEBREW_CASK_OPTS=--no-quarantine brew install --cask audiorouter
 
 For every "app → device" rule, AudioRouter creates a [Core Audio process tap](https://developer.apple.com/documentation/coreaudio/audiohardwarecreateprocesstap(_:_:)) on the app's audio, wraps it in a private aggregate device whose real sub-device is your chosen output, and copies the tapped samples into that device's buffers in a realtime IO callback (with the per-app gain applied). The tap mutes the app's original output only while the route is actively pulling audio, and leaked routes from crashes are cleaned up on the next launch — so no app is ever left silently muted.
 
+## Per-tab routing for Chrome
+
+The [AudioRouter Tabs extension](chrome-extension/) extends routing *inside* Chrome: each tab can have its own output device and its own volume (up to 200%) — e.g. two YouTube tabs playing to two different speakers at once. macOS can't distinguish tabs (Chrome mixes them into one process before the OS sees any audio), so this part lives in the browser. See [chrome-extension/README.md](chrome-extension/README.md) for install and usage. Note: remove any whole-Chrome rule in the Mac app while using per-tab routing — the app-level rule captures all Chrome audio and overrides tab-level choices.
+
 ## Limitations
 
 - **Spotify Connect / Chromecast-style pickers bypass the Mac.** If you select a speaker inside an app itself, that audio streams directly over the network and never touches macOS — AudioRouter can't route it. Pick AirPlay devices from AudioRouter instead; they appear as normal output devices.

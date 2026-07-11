@@ -11,6 +11,8 @@ Where the app stands, how to run it at startup, and how to ship it to other peop
 - ✅ App icon (`Support/AppIcon.svg` → `.icns` via `scripts/make-icon.sh`)
 - ✅ Per-app volume sliders (gain applied in the IO callback, persisted per rule)
 - ✅ First-run onboarding window (reopenable via the ? button in the menu footer)
+- ✅ Tri-state playback indicator (green playing / red paused / hidden when inactive) with reliable cross-app attribution
+- ✅ Per-tab Chrome routing + volume via the `chrome-extension/` companion (tabCapture → GainNode → AudioContext.setSinkId; no content scripts, loads unpacked)
 
 ## Run at Mac startup
 
@@ -86,7 +88,8 @@ Users just download, drag to Applications, and approve the System Audio Recordin
 
 ## Roadmap ideas (roughly in value order)
 
-1. **Format-aware buffer copy** — the IOProc currently does a straight per-buffer copy; stereo-to-stereo is fine, but multichannel interfaces or odd sample formats would need real channel mapping.
-2. **Bluetooth→Bluetooth drift tuning** — drift compensation is always on; when source and destination share a clock domain it can cause a faint periodic crackle. Detect and disable it for that case.
-3. **Pause routing while app is silent** — routes currently hold while an app runs, which keeps AirPlay speakers "occupied" by silence. Could release the tap after N minutes of silence, at the cost of a brief blip when playback resumes.
-4. **Route health check** — detect a stalled IOProc (no callbacks for N seconds while the app claims to be playing) and rebuild the route automatically.
+1. **Per-tab ↔ per-app rule reconciliation** — the Mac app's whole-Chrome rule currently overrides the extension's per-tab routing (it captures all Chrome audio, including the extension's playback). Options: native messaging so the app auto-suspends its Chrome rule while tabs are routed, or at minimum a warning in both UIs. Also: persisted per-hostname tab defaults ("youtube.com → headphones") in the extension, and bundling the extension inside the app's Resources with an in-app install button.
+2. **Format-aware buffer copy** — the IOProc currently does a straight per-buffer copy; stereo-to-stereo is fine, but multichannel interfaces or odd sample formats would need real channel mapping.
+3. **Bluetooth→Bluetooth drift tuning** — drift compensation is always on; when source and destination share a clock domain it can cause a faint periodic crackle. Detect and disable it for that case.
+4. **Pause routing while app is silent** — routes currently hold while an app runs, which keeps AirPlay speakers "occupied" by silence. Could release the tap after N minutes of silence, at the cost of a brief blip when playback resumes.
+5. **Route health check** — detect a stalled IOProc (no callbacks for N seconds while the app claims to be playing) and rebuild the route automatically.

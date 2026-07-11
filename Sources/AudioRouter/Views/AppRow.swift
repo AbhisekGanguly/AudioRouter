@@ -30,11 +30,19 @@ struct AppRow: View {
                         Text(app.name)
                             .font(.callout)
                             .lineLimit(1)
-                        if app.isPlaying {
+                        switch app.playbackState {
+                        case .playing:
                             Image(systemName: "speaker.wave.2.fill")
                                 .font(.caption2)
                                 .foregroundStyle(.green)
                                 .help("Playing audio")
+                        case .paused:
+                            Image(systemName: "speaker.slash.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.red)
+                                .help("Paused")
+                        case .inactive:
+                            EmptyView()
                         }
                     }
                     if let rule, isRouted {

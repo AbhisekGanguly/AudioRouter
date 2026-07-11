@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>AudioRouter Tabs — Settings</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 560px;
+    margin: 48px auto;
+    padding: 0 24px;
+  }
+  h1 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  h1 img { width: 28px; height: 28px; }
+  .card {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  button {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    background: #3f7dfb;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  .status { margin-top: 12px; font-weight: 500; }
+  .ok { color: #28a745; }
+  .err { color: #e5484d; }
+  .muted { color: gray; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1><img src="icons/icon48.png" alt="">AudioRouter Tabs</h1>
+
+<div class="card">
+  <h2>Device access</h2>
+  <p>
+    Chrome hides audio device names ("MacBook Pro Speakers", "AirPods", …)
+    until an extension is granted media-device access. Chrome only offers this
+    through the microphone permission — <strong>AudioRouter never records or
+    listens to anything</strong>; the permission is requested once, released
+    immediately, and used purely to reveal the names of your output devices.
+    The code is open source if you want to verify.
+  </p>
+  <button id="grant">Grant device access</button>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="card">
+  <h2>Tips</h2>
+  <p class="muted">
+    • To route a tab: open it, click the AudioRouter icon, and pick a device or move the volume slider.<br>
+    • Routing survives page navigation and stops automatically when the tab closes.<br>
+    • If the Mac app has a whole-Chrome rule active, it overrides per-tab routing — remove Chrome's rule in the menu bar app when using per-tab control.
+  </p>
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>

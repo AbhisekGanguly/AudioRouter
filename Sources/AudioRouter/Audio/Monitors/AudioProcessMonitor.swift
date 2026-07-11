@@ -16,6 +16,7 @@ final class AudioProcessMonitor: ObservableObject {
     private var outputListenerObjects: Set<AudioObjectID> = []
     private var outputListenerBlock: AudioObjectPropertyListenerBlock?
     private var refreshWorkItem: DispatchWorkItem?
+    private var pollTimer: DispatchSourceTimer?
     private static let log = Logger(subsystem: "com.abhisekganguly.AudioRouter", category: "AudioProcessMonitor")
 
     func start() {
@@ -44,6 +45,17 @@ final class AudioProcessMonitor: ObservableObject {
         )
 
         refresh()
+
+        // kAudioProcessPropertyIsRunningOutput's change notification is not
+        // reliable in practice — play/pause transitions can go unnoticed for
+        // minutes. Poll as a hard ceiling on staleness. A DispatchSourceTimer
+        // (not Timer) keeps firing while a menu/popover is open, since
+        // Timer's default run loop mode stalls during event tracking.
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now() + 1, repeating: 1.0)
+        timer.setEventHandler { [weak self] in self?.refresh() }
+        timer.resume()
+        pollTimer = timer
     }
 
     @objc private func workspaceAppsChanged() {
@@ -70,12 +82,26 @@ final class AudioProcessMonitor: ObservableObject {
                 .map { ($0.processIdentifier, $0) }
         )
 
+        let runningAppsByBundleID = Dictionary(
+            runningApps.compactMap { app -> (String, NSRunningApplication)? in
+                guard app.activationPolicy == .regular, let id = app.bundleIdentifier else { return nil }
+                return (id, app)
+            },
+            uniquingKeysWith: { first, _ in first }
+        )
+
         var grouped: [String: (app: NSRunningApplication, objects: Set<AudioObjectID>, playing: Bool)] = [:]
         var seenObjects: Set<AudioObjectID> = []
 
         for object in processObjects {
             guard let pid = try? object.readProcessPID(), pid > 0 else { continue }
-            guard let owner = resolveOwningApp(pid: pid, regularAppsByPID: regularAppsByPID, allApps: runningApps) else { continue }
+            guard let owner = resolveOwningApp(
+                object: object,
+                pid: pid,
+                runningAppsByBundleID: runningAppsByBundleID,
+                regularAppsByPID: regularAppsByPID,
+                allApps: runningApps
+            ) else { continue }
             guard let ownerBundleID = owner.bundleIdentifier else { continue }
             // Never offer to route ourselves.
             guard ownerBundleID != Bundle.main.bundleIdentifier else { continue }
@@ -99,7 +125,10 @@ final class AudioProcessMonitor: ObservableObject {
                 name: entry.app.localizedName ?? bundleID,
                 icon: entry.app.icon,
                 processObjectIDs: entry.objects,
-                isPlaying: entry.playing
+                // Every entry here has ≥1 process object by construction, so
+                // this is always playing or paused; .inactive models an app
+                // with zero process objects, which never gets a row at all.
+                playbackState: entry.playing ? .playing : .paused
             )
         }
         .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
@@ -110,13 +139,23 @@ final class AudioProcessMonitor: ObservableObject {
         }
     }
 
-    /// Maps an audio process PID to the user-visible app that owns it by
-    /// walking up the BSD process tree until a `.regular` app is found.
+    /// Maps a Core Audio process object to the user-visible app that owns it.
+    /// Tries Core Audio's own reported bundle ID first (authoritative when
+    /// present — this is what lets apps like Spotify, whose process tree
+    /// shape doesn't match Chrome's parent/helper convention, attribute
+    /// correctly), then falls back to walking the BSD process tree.
     private func resolveOwningApp(
+        object: AudioObjectID,
         pid: pid_t,
+        runningAppsByBundleID: [String: NSRunningApplication],
         regularAppsByPID: [pid_t: NSRunningApplication],
         allApps: [NSRunningApplication]
     ) -> NSRunningApplication? {
+        let reportedBundleID = object.readProcessBundleID()
+        if !reportedBundleID.isEmpty, let owner = runningAppsByBundleID[reportedBundleID] {
+            return owner
+        }
+
         var current = pid
         for _ in 0..<12 {
             if let app = regularAppsByPID[current] { return app }

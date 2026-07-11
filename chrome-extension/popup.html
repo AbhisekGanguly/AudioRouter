@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header>
+  <img src="icons/icon32.png" alt="" width="20" height="20">
+  <h1>AudioRouter — Tabs</h1>
+</header>
+
+<div id="grant-banner" class="banner hidden">
+  Device names are hidden until you grant access.
+  <button id="grant-btn">Grant device access</button>
+</div>
+
+<div id="list"></div>
+
+<footer>
+  <span id="status"></span>
+  <a href="#" id="options-link">Settings</a>
+</footer>
+
+<template id="row-template">
+  <div class="row">
+    <img class="favicon" alt="">
+    <div class="meta">
+      <div class="title-line">
+        <span class="title"></span>
+        <span class="audible-badge hidden">●</span>
+      </div>
+      <div class="subtitle"></div>
+    </div>
+    <div class="controls">
+      <select class="device"></select>
+      <div class="volume-line">
+        <input type="range" class="volume" min="0" max="200" step="5">
+        <span class="volume-label"></span>
+      </div>
+    </div>
+    <button class="stop hidden" title="Stop routing this tab">✕</button>
+  </div>
+</template>
+
+<script src="popup.js"></script>
+</body>
+</html>
