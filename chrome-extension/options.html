@@ -4,62 +4,142 @@
 <meta charset="utf-8">
 <title>AudioRouter Tabs — Settings</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root {
+    color-scheme: light dark;
+    --accent: #3f7dfb;
+    --teal: #34d8f0;
+    --coral: #ff5f96;
+    --border: rgba(128, 128, 128, 0.3);
+  }
   body {
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    max-width: 560px;
-    margin: 48px auto;
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 620px;
+    margin: 40px auto 64px;
     padding: 0 24px;
   }
-  h1 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
-  h1 img { width: 28px; height: 28px; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  header img { width: 40px; height: 40px; }
+  h1 { font-size: 22px; margin: 0; }
+  .tagline { color: gray; font-size: 13px; margin: 2px 0 0; }
   .card {
-    border: 1px solid rgba(128, 128, 128, 0.3);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 20px;
-    margin-top: 20px;
+    padding: 18px 20px;
+    margin-top: 18px;
   }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  p { margin: 8px 0; }
+  ul { margin: 8px 0; padding-left: 20px; }
+  li { margin: 4px 0; }
   button {
     border: none;
     border-radius: 8px;
     padding: 8px 16px;
-    background: #3f7dfb;
+    background: var(--accent);
     color: #fff;
     font-size: 14px;
     cursor: pointer;
-    margin-top: 12px;
+    margin-top: 10px;
   }
-  .status { margin-top: 12px; font-weight: 500; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .status { margin-top: 10px; font-weight: 500; }
   .ok { color: #28a745; }
   .err { color: #e5484d; }
   .muted { color: gray; font-size: 13px; }
+  .pill-row { display: flex; gap: 6px; margin: 10px 0 2px; flex-wrap: wrap; }
+  .pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    color: gray;
+  }
+  .pill.on { border-color: var(--teal); color: var(--teal); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { margin-top: 24px; font-size: 12px; color: gray; text-align: center; }
 </style>
 </head>
 <body>
-<h1><img src="icons/icon48.png" alt="">AudioRouter Tabs</h1>
+<header>
+  <img src="icons/icon48.png" alt="">
+  <div>
+    <h1>AudioRouter Tabs</h1>
+    <p class="tagline">Every tab, its own speaker — standalone for Windows, macOS &amp; Linux</p>
+  </div>
+</header>
+
+<div class="card">
+  <h2>What this extension does</h2>
+  <p>
+    Give each browser tab its own output device and its own volume (0–200%),
+    simultaneously — a video call on your headphones while music plays to a
+    speaker, or two YouTube tabs on two different outputs.
+  </p>
+  <p class="muted">
+    It's fully standalone: it works in any Chromium browser (Chrome, Edge,
+    Brave, Arc) on <strong>Windows, macOS, and Linux</strong> — no companion
+    app required. Windows users get what the built-in Volume Mixer can't do
+    (per-tab, not just per-browser); Mac users can pair it with the
+    <a href="https://github.com/AbhisekGanguly/AudioRouter" target="_blank">AudioRouter app for macOS</a>,
+    which adds the system-wide per-app routing macOS itself lacks.
+  </p>
+  <div class="pill-row">
+    <span class="pill on">Per-tab output device</span>
+    <span class="pill on">Per-tab volume · up to 200%</span>
+    <span class="pill on">No content scripts</span>
+    <span class="pill on">No page access</span>
+  </div>
+</div>
 
 <div class="card">
   <h2>Device access</h2>
   <p>
-    Chrome hides audio device names ("MacBook Pro Speakers", "AirPods", …)
-    until an extension is granted media-device access. Chrome only offers this
-    through the microphone permission — <strong>AudioRouter never records or
-    listens to anything</strong>; the permission is requested once, released
-    immediately, and used purely to reveal the names of your output devices.
-    The code is open source if you want to verify.
+    Chrome hides audio device names ("MacBook Pro Speakers", "AirPods",
+    "Realtek Speakers"…) until an extension is granted media-device access,
+    and only offers this through the microphone permission.
+    <strong>AudioRouter never records or listens to anything</strong> — the
+    permission is requested once, released immediately, and used purely to
+    reveal the names of your output devices. Routing still works without it;
+    you'd just see unnamed devices in the picker.
   </p>
   <button id="grant">Grant device access</button>
   <div class="status" id="status"></div>
 </div>
 
 <div class="card">
-  <h2>Tips</h2>
+  <h2>How it works</h2>
   <p class="muted">
-    • To route a tab: open it, click the AudioRouter icon, and pick a device or move the volume slider.<br>
-    • Routing survives page navigation and stops automatically when the tab closes.<br>
-    • If the Mac app has a whole-Chrome rule active, it overrides per-tab routing — remove Chrome's rule in the menu bar app when using per-tab control.
+    When you route a tab, the extension captures that tab's audio with
+    Chrome's <code>tabCapture</code> API and replays it through a Web Audio
+    pipeline — a gain node for volume, and <code>AudioContext.setSinkId()</code>
+    to aim it at the device you chose. Capturing silences the tab's normal
+    output, so audio plays exactly once, where you pointed it. Closing the tab
+    or clicking ✕ instantly restores normal playback.
+  </p>
+  <ul class="muted">
+    <li>Routed tabs show Chrome's capture indicator — expected, that's the API.</li>
+    <li>To start routing a tab, be on it when you click the toolbar icon (a Chrome security rule). Already-routed tabs stay controllable from anywhere.</li>
+    <li><code>chrome://</code> pages and the Chrome Web Store can't be captured (Chrome policy).</li>
+    <li>Capture adds a few milliseconds of latency — imperceptible for music, fine for video.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Using the Mac app too?</h2>
+  <p class="muted">
+    If the AudioRouter macOS app has a <em>whole-Chrome</em> rule active, it
+    captures all of Chrome's audio — including this extension's routed
+    playback — and overrides per-tab choices. Remove Chrome's rule in the
+    menu bar app while using per-tab routing.
   </p>
 </div>
+
+<footer>
+  <a href="https://abhisekganguly.github.io/AudioRouter/" target="_blank">Website</a> ·
+  <a href="https://github.com/AbhisekGanguly/AudioRouter" target="_blank">GitHub</a> ·
+  Open source, MIT licensed
+</footer>
 
 <script src="options.js"></script>
 </body>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AudioRouter — every app, every tab, its own speaker</title>
+<meta name="description" content="Open-source per-app audio routing for macOS and per-tab audio routing for any Chromium browser on Windows, macOS, and Linux. Spotify to the speaker, YouTube to your headphones — simultaneously.">
+<meta property="og:title" content="AudioRouter">
+<meta property="og:description" content="Every app. Every tab. Its own speaker. Open-source audio routing for macOS + any Chromium browser.">
+<meta property="og:image" content="https://abhisekganguly.github.io/AudioRouter/assets/icon.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0d1d;
+  --bg-2: #12142e;
+  --panel: #171932;
+  --panel-2: #1d2040;
+  --line: rgba(151, 161, 220, 0.16);
+  --text: #eceef8;
+  --text-2: #9aa0c4;
+  --teal: #34d8f0;
+  --blue: #3f7dfb;
+  --amber: #ffc23e;
+  --coral: #ff5f96;
+  --green: #3ddc7a;
+  --red: #ff5757;
+  --radius: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1100px 600px at 75% -10%, rgba(63, 125, 251, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 10% 30%, rgba(255, 95, 150, 0.07), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-weight: 340;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* faint grain */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+main, nav, footer { position: relative; z-index: 2; }
+
+.mono {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* ─── nav ─── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1080px; margin: 0 auto; padding: 22px 24px;
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.brand img { width: 34px; height: 34px; }
+.brand span { font-weight: 640; font-size: 18px; letter-spacing: -0.01em; }
+nav .links { display: flex; gap: 22px; align-items: center; }
+nav a.plain { color: var(--text-2); text-decoration: none; font-size: 14px; }
+nav a.plain:hover { color: var(--text); }
+.gh-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--line); border-radius: 99px;
+  padding: 7px 15px; color: var(--text); text-decoration: none; font-size: 14px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gh-btn:hover { border-color: var(--teal); background: rgba(52, 216, 240, 0.07); }
+
+/* ─── hero ─── */
+.hero { padding: 72px 0 40px; text-align: center; }
+
+.hero .mono { display: inline-block; margin-bottom: 22px; }
+.hero .mono b { color: var(--teal); font-weight: 500; }
+
+h1 {
+  font-size: clamp(42px, 7.2vw, 84px);
+  font-weight: 720;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  margin: 0 auto 24px;
+  max-width: 15ch;
+}
+h1 .t { background: linear-gradient(100deg, var(--teal), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h1 .c { background: linear-gradient(100deg, var(--amber), var(--coral)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.hero p.sub {
+  color: var(--text-2);
+  font-size: 18px;
+  max-width: 56ch;
+  margin: 0 auto 34px;
+}
+.hero p.sub strong { color: var(--text); font-weight: 520; }
+
+.cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  border-radius: 12px; padding: 13px 24px;
+  font-size: 15.5px; font-weight: 560; text-decoration: none;
+  font-family: inherit;
+  transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+  background: linear-gradient(120deg, var(--teal), var(--blue));
+  color: #071022;
+  box-shadow: 0 8px 30px rgba(63, 125, 251, 0.35);
+}
+.btn.primary:hover { box-shadow: 0 10px 38px rgba(63, 125, 251, 0.5); }
+.btn.secondary {
+  background: linear-gradient(120deg, var(--amber), var(--coral));
+  color: #200a12;
+  box-shadow: 0 8px 30px rgba(255, 95, 150, 0.25);
+}
+.btn.secondary:hover { box-shadow: 0 10px 38px rgba(255, 95, 150, 0.4); }
+
+/* ─── animated route diagram ─── */
+.routes { margin: 26px auto 0; max-width: 860px; display: block; }
+.routes text {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px; letter-spacing: 0.16em;
+  fill: var(--text-2);
+}
+.eq { display: inline-flex; gap: 3px; align-items: flex-end; height: 18px; margin-left: 8px; vertical-align: -3px; }
+.eq i {
+  width: 3px; border-radius: 2px;
+  background: linear-gradient(var(--teal), var(--blue));
+  animation: eq 1.1s ease-in-out infinite;
+}
+.eq i:nth-child(1) { height: 40%; animation-delay: 0s; }
+.eq i:nth-child(2) { height: 90%; animation-delay: 0.15s; }
+.eq i:nth-child(3) { height: 60%; animation-delay: 0.3s; }
+.eq i:nth-child(4) { height: 100%; animation-delay: 0.45s; }
+.eq i:nth-child(5) { height: 50%; animation-delay: 0.6s; }
+@keyframes eq { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1); } }
+
+/* ─── sections ─── */
+section { padding: 64px 0; }
+.section-head { text-align: center; margin-bottom: 40px; }
+.section-head .mono { margin-bottom: 12px; display: block; }
+h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 680; letter-spacing: -0.025em; line-height: 1.1; }
+.section-head p { color: var(--text-2); max-width: 58ch; margin: 14px auto 0; }
+
+/* channel strips */
+.channels { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 900px) { .channels { grid-template-columns: 1fr; } }
+
+.channel {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.channel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--line);
+}
+.channel-head .led { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+.channel-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.channel h3 { font-size: 24px; font-weight: 640; letter-spacing: -0.02em; }
+.channel h3 small { display: block; font-size: 13.5px; color: var(--text-2); font-weight: 380; margin-top: 4px; letter-spacing: 0; }
+.shot {
+  border-radius: 12px; border: 1px solid var(--line);
+  width: 100%; display: block;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+.feat { list-style: none; display: grid; gap: 8px; font-size: 14.5px; color: var(--text-2); }
+.feat li { padding-left: 22px; position: relative; }
+.feat li::before { content: "▸"; position: absolute; left: 4px; }
+.feat.t li::before { color: var(--teal); }
+.feat.c li::before { color: var(--coral); }
+.feat b { color: var(--text); font-weight: 540; }
+
+/* terminal */
+.term {
+  background: #0a0b16;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+}
+.term-bar { display: flex; gap: 6px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; }
+.term-bar i:nth-child(1) { background: #ff5f57; }
+.term-bar i:nth-child(2) { background: #febc2e; }
+.term-bar i:nth-child(3) { background: #28c840; }
+.term-bar span { margin-left: auto; font-size: 10px; color: var(--text-2); letter-spacing: 0.1em; }
+.term pre { padding: 14px 16px; overflow-x: auto; line-height: 1.9; color: #c9d4ff; }
+.term .dim { color: #5a6295; }
+.copy-btn {
+  margin: 0 16px 14px; align-self: flex-start;
+  background: none; border: 1px solid var(--line); color: var(--text-2);
+  border-radius: 8px; padding: 5px 12px; font-family: "JetBrains Mono", monospace;
+  font-size: 11px; cursor: pointer; letter-spacing: 0.08em;
+}
+.copy-btn:hover { color: var(--teal); border-color: var(--teal); }
+
+.steps { counter-reset: s; list-style: none; display: grid; gap: 10px; font-size: 14.5px; color: var(--text-2); }
+.steps li { counter-increment: s; padding-left: 34px; position: relative; }
+.steps li::before {
+  content: counter(s);
+  position: absolute; left: 0; top: 1px;
+  width: 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  background: rgba(255, 95, 150, 0.14); color: var(--coral);
+  font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700;
+}
+.steps code, .why code, .faq code {
+  font-family: "JetBrains Mono", monospace; font-size: 0.86em;
+  background: rgba(151, 161, 220, 0.12); border-radius: 5px; padding: 1.5px 6px;
+}
+
+/* why */
+.why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 800px) { .why-grid { grid-template-columns: 1fr; } }
+.why-card {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 26px; background: rgba(23, 25, 50, 0.6);
+}
+.why-card .mono { display: block; margin-bottom: 14px; }
+.why-card p { color: var(--text-2); font-size: 15px; }
+.why-card p b { color: var(--text); font-weight: 540; }
+.why-card .verdict { margin-top: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot.g { background: var(--green); box-shadow: 0 0 7px var(--green); }
+.dot.r { background: var(--red); box-shadow: 0 0 7px var(--red); }
+
+/* how */
+.how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 800px) { .how-grid { grid-template-columns: 1fr; } }
+.how-card { border-left: 2px solid var(--teal); padding: 4px 0 4px 22px; }
+.how-card.c { border-color: var(--coral); }
+.how-card h4 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.how-card p { color: var(--text-2); font-size: 14.5px; }
+.how-card .mono { display: block; margin-bottom: 10px; }
+
+/* gallery */
+.gallery-grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 22px; align-items: start; }
+@media (max-width: 800px) { .gallery-grid { grid-template-columns: 1fr; } }
+.gallery img { width: 100%; border-radius: var(--radius); border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5); display: block; }
+.gallery figcaption { text-align: center; margin-top: 14px; }
+
+/* faq */
+.faq { max-width: 720px; margin: 0 auto; display: grid; gap: 10px; }
+.faq details {
+  border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(23, 25, 50, 0.6); padding: 16px 20px;
+}
+.faq summary { cursor: pointer; font-weight: 540; font-size: 15.5px; }
+.faq details p { color: var(--text-2); font-size: 14.5px; margin-top: 10px; }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 34px 24px 44px; text-align: center; color: var(--text-2); font-size: 14px;
+}
+footer a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--line); }
+footer a:hover { border-color: var(--teal); }
+footer .mono { display: block; margin-top: 14px; }
+
+/* reveals */
+.rv { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.rv.vis { opacity: 1; transform: none; }
+.hero > * { animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero > *:nth-child(2) { animation-delay: 0.08s; }
+.hero > *:nth-child(3) { animation-delay: 0.16s; }
+.hero > *:nth-child(4) { animation-delay: 0.24s; }
+.hero > *:nth-child(5) { animation-delay: 0.32s; }
+@keyframes rise { from { opacity: 0; transform: translateY(26px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="#"><img src="assets/icon.png" alt="AudioRouter icon"><span>AudioRouter</span></a>
+  <div class="links">
+    <a class="plain" href="#mac">Mac app</a>
+    <a class="plain" href="#tabs">Chrome extension</a>
+    <a class="gh-btn" href="https://github.com/AbhisekGanguly/AudioRouter">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap hero">
+    <span class="mono">OPEN SOURCE · MIT · <b>macOS</b> + ANY CHROMIUM BROWSER<span class="eq"><i></i><i></i><i></i><i></i><i></i></span></span>
+    <h1>Every app. Every tab. <span class="t">Its own</span> <span class="c">speaker.</span></h1>
+    <p class="sub">
+      <strong>Spotify on the living-room speaker. A lecture in your headphones. A second
+      YouTube tab on the Mac speakers.</strong> Simultaneously — each with its own volume.
+      AudioRouter does per-app routing on macOS and per-tab routing in any Chromium
+      browser on Windows, macOS, and Linux.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#mac">⌘ Install for Mac</a>
+      <a class="btn secondary" href="#tabs">◍ Get the Chrome extension</a>
+    </div>
+
+    <svg class="routes" viewBox="0 0 860 190" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="gt" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#34d8f0"/><stop offset="1" stop-color="#3f7dfb"/>
+        </linearGradient>
+        <linearGradient id="gc" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ffc23e"/><stop offset="1" stop-color="#ff5f96"/>
+        </linearGradient>
+      </defs>
+      <rect x="30" y="73" width="120" height="44" rx="12" stroke="rgba(151,161,220,0.35)" fill="rgba(151,161,220,0.07)"/>
+      <text x="90" y="99" text-anchor="middle">SOURCE</text>
+      <path id="p1" d="M150 88 C 360 88, 480 40, 700 40" stroke="url(#gt)" stroke-width="2.5" stroke-linecap="round"/>
+      <path id="p2" d="M150 102 C 360 102, 480 150, 700 150" stroke="url(#gc)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle r="4" fill="#34d8f0">
+        <animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#p1"/></animateMotion>
+      </circle>
+      <circle r="4" fill="#ff5f96">
+        <animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion>
+      </circle>
+      <text x="716" y="44" >OUT 1 · SPEAKER</text>
+      <text x="716" y="154">OUT 2 · HEADPHONES</text>
+    </svg>
+  </div>
+
+  <section id="products">
+    <div class="wrap">
+      <div class="section-head rv">
+        <span class="mono">TWO CHANNELS, ONE PROJECT</span>
+        <h2>A native Mac app. A browser extension.<br>Use either — or both.</h2>
+      </div>
+
+      <div class="channels">
+        <div class="channel rv" id="mac">
+          <div class="channel-head">
+            <span class="mono">CH 1 — NATIVE APP</span><span class="led"></span>
+          </div>
+          <div class="channel-body">
+            <h3>AudioRouter for macOS
+              <small>The per-app audio control macOS never shipped</small>
+            </h3>
+            <img class="shot" src="assets/mac-app.png" alt="AudioRouter menu bar popover routing Spotify and Chrome to different devices" loading="lazy">
+            <ul class="feat t">
+              <li><b>Route any app to any output</b> — AirPlay, Bluetooth, USB, built-in — simultaneously</li>
+              <li><b>Per-app volume</b>, independent of system volume</li>
+              <li><b>Rules persist</b> and re-apply automatically, across reboots</li>
+              <li><b>Live playing indicators</b>, graceful fallback when a device disconnects</li>
+              <li>Native Swift menu bar app on Apple's Core Audio process-tap API — no drivers, no Electron</li>
+            </ul>
+            <div class="term">
+              <div class="term-bar"><i></i><i></i><i></i><span>zsh</span></div>
+              <pre id="brew-cmd">brew tap abhisekganguly/tap
+brew trust abhisekganguly/tap   <span class="dim"># Homebrew 6+</span>
+HOMEBREW_CASK_OPTS=--no-quarantine brew install --cask audiorouter</pre>
+              <button class="copy-btn" data-copy="brew tap abhisekganguly/tap
+brew trust abhisekganguly/tap
+HOMEBREW_CASK_OPTS=--no-quarantine brew install --cask audiorouter">COPY</button>
+            </div>
+            <span class="mono">macOS 14.4+ · APPLE SILICON · <a style="color:var(--teal); text-decoration:none" href="https://github.com/AbhisekGanguly/AudioRouter/releases">DIRECT DOWNLOAD ↗</a></span>
+          </div>
+        </div>
+
+        <div class="channel rv" id="tabs">
+          <div class="channel-head">
+            <span class="mono">CH 2 — BROWSER EXTENSION</span><span class="led"></span>
+          </div>
+          <div class="channel-body">
+            <h3>AudioRouter Tabs
+              <small>Standalone · Windows, macOS &amp; Linux · any Chromium browser</small>
+            </h3>
+            <img class="shot" src="assets/tabs-popup.png" alt="AudioRouter Tabs popup routing two YouTube tabs to different devices" loading="lazy">
+            <ul class="feat c">
+              <li><b>Each tab, its own output device</b> — even two tabs of the same site</li>
+              <li><b>Per-tab volume up to 200%</b> — boost quiet videos</li>
+              <li><b>No content scripts, no page access</b> — it touches tab audio only</li>
+              <li>Works in Chrome, Edge, Brave, Arc — <b>no companion app required</b></li>
+              <li>Built on <code>tabCapture</code> + Web Audio <code>setSinkId</code></li>
+            </ul>
+            <ol class="steps">
+              <li><a style="color:var(--coral); text-decoration:none" href="https://github.com/AbhisekGanguly/AudioRouter/archive/refs/heads/main.zip">Download the repo ↗</a> and unzip — you need the <code>chrome-extension/</code> folder</li>
+              <li>Open <code>chrome://extensions</code>, enable <b style="color:var(--text)">Developer mode</b></li>
+              <li>Click <b style="color:var(--text)">Load unpacked</b> → select <code>chrome-extension/</code></li>
+              <li>Open a tab with audio, click the icon, pick a device 🎧</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why">
+    <div class="wrap">
+      <div class="section-head rv">
+        <span class="mono">WHY THIS EXISTS</span>
+        <h2>Your OS decides where sound goes.<br>It shouldn't.</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-card rv">
+          <span class="mono">ON WINDOWS</span>
+          <p>Windows ships a per-app Volume Mixer — but it stops at the browser's edge.
+          <b>All your tabs are one blob called "chrome.exe".</b></p>
+          <p class="verdict"><span class="dot g"></span>AudioRouter Tabs splits them — device and volume per tab.</p>
+        </div>
+        <div class="why-card rv">
+          <span class="mono">ON MACOS</span>
+          <p>macOS has <b>no per-app audio control at all</b> — one output device rules
+          everything, and even SoundSource-class tools can't split browser tabs.</p>
+          <p class="verdict"><span class="dot g"></span>The AudioRouter app adds per-app routing.</p>
+          <p class="verdict"><span class="dot g"></span>AudioRouter Tabs adds per-tab, on top.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head rv">
+        <span class="mono">UNDER THE HOOD</span>
+        <h2>No kernel extensions. No virtual drivers. No Electron.</h2>
+      </div>
+      <div class="how-grid">
+        <div class="how-card rv">
+          <span class="mono">MAC APP · CORE AUDIO PROCESS TAPS</span>
+          <h4>Tap → private aggregate → your device</h4>
+          <p>For each rule, AudioRouter creates a Core Audio process tap on that app
+          (<code>AudioHardwareCreateProcessTap</code>, macOS 14.4+), wraps it in a private
+          aggregate device targeting your chosen output, and copies samples across in a
+          realtime IO callback — applying per-app gain on the way. Crash-safe: leaked
+          taps are destroyed on next launch so nothing stays muted.</p>
+        </div>
+        <div class="how-card c rv">
+          <span class="mono">EXTENSION · TABCAPTURE + WEB AUDIO</span>
+          <h4>Capture → gain → setSinkId</h4>
+          <p>Routing a tab captures its audio with <code>chrome.tabCapture</code> and
+          replays it through a Web Audio pipeline — a gain node for volume and
+          <code>AudioContext.setSinkId()</code> aimed at your chosen device. Capturing
+          silences the tab's normal output, so audio plays exactly once, where you
+          pointed it. Close the tab (or hit ✕) and normal playback returns instantly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="settings-shot">
+    <div class="wrap">
+      <div class="gallery-grid">
+        <figure class="gallery rv">
+          <img src="assets/onboarding.png" alt="AudioRouter first-run welcome window" loading="lazy">
+          <figcaption class="mono">FIRST RUN — EVERY PERMISSION EXPLAINED BEFORE MACOS ASKS</figcaption>
+        </figure>
+        <figure class="gallery rv">
+          <img src="assets/tabs-options.png" alt="AudioRouter Tabs settings page" loading="lazy">
+          <figcaption class="mono">EXTENSION SETTINGS — PRIVACY-FIRST DEVICE ACCESS</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq-s">
+    <div class="wrap">
+      <div class="section-head rv">
+        <span class="mono">FINE PRINT</span>
+        <h2>Honest answers</h2>
+      </div>
+      <div class="faq rv">
+        <details>
+          <summary>macOS says it "could not verify" the app. Why?</summary>
+          <p>The Mac app is ad-hoc signed (no Apple Developer subscription — this is a free,
+          open-source project). Install via Homebrew with <code>--no-quarantine</code> and the warning
+          never appears; or after a manual download, approve it once under
+          System&nbsp;Settings&nbsp;→&nbsp;Privacy&nbsp;&amp;&nbsp;Security&nbsp;→&nbsp;"Open&nbsp;Anyway".</p>
+        </details>
+        <details>
+          <summary>Why does the Mac app ask for "System Audio Recording"?</summary>
+          <p>That's the permission gating Apple's process-tap API — the only sanctioned way to
+          capture an app's audio in order to redirect it. Nothing is recorded or stored; the
+          audio goes straight to the device you chose, and the code is public.</p>
+        </details>
+        <details>
+          <summary>Why does the extension mention a microphone permission?</summary>
+          <p>Chrome only reveals audio device <em>names</em> to extensions holding a media
+          permission, and the mic permission is the only lever it offers. AudioRouter Tabs
+          requests it once, releases it immediately, and uses it purely to show names like
+          "AirPods Pro" instead of anonymous device IDs. Routing works without it.</p>
+        </details>
+        <details>
+          <summary>What can't it do?</summary>
+          <p>Audio an app streams over its own network protocol (Spotify Connect, Chromecast)
+          never touches your computer's audio system and can't be routed — pick AirPlay from
+          AudioRouter instead. On the Mac app, a whole-Chrome rule overrides the extension's
+          per-tab choices, so use one or the other for Chrome. <code>chrome://</code> pages can't be
+          captured (Chrome policy).</p>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div>
+    <a href="https://github.com/AbhisekGanguly/AudioRouter">GitHub</a> ·
+    <a href="https://github.com/AbhisekGanguly/AudioRouter/releases">Releases</a> ·
+    <a href="https://github.com/AbhisekGanguly/AudioRouter/blob/main/LICENSE">MIT License</a>
+  </div>
+  <span class="mono">BUILT BY ABHISEK GANGULY · ROUTES DRAWN WITH CORE AUDIO ♪</span>
+</footer>
+
+<script>
+document.querySelectorAll(".copy-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(btn.dataset.copy);
+    btn.textContent = "COPIED ✓";
+    setTimeout(() => (btn.textContent = "COPY"), 1600);
+  });
+});
+
+const io = new IntersectionObserver(
+  (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("vis")),
+  { threshold: 0.12 }
+);
+document.querySelectorAll(".rv").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>

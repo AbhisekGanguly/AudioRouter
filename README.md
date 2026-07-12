@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://abhisekganguly.github.io/AudioRouter/"><img src="https://img.shields.io/badge/website-AudioRouter-3f7dfb" alt="Website"></a>
   <img src="https://img.shields.io/badge/macOS-14.4+-blue?logo=apple" alt="macOS 14.4+">
   <img src="https://img.shields.io/badge/Swift-5.10-orange?logo=swift" alt="Swift 5.10">
   <img src="https://img.shields.io/github/v/release/AbhisekGanguly/AudioRouter?color=green" alt="Latest release">
@@ -17,7 +18,11 @@
 </p>
 
 <p align="center">
-  <img src="assets/info.png" width="420" alt="AudioRouter menu bar popover">
+  🌐 <b><a href="https://abhisekganguly.github.io/AudioRouter/">abhisekganguly.github.io/AudioRouter</a></b>
+</p>
+
+<p align="center">
+  <img src="assets/mac-app.png" width="420" alt="AudioRouter onboarding window">
 </p>
 
 ---
@@ -64,9 +69,15 @@ HOMEBREW_CASK_OPTS=--no-quarantine brew install --cask audiorouter
 
 For every "app → device" rule, AudioRouter creates a [Core Audio process tap](https://developer.apple.com/documentation/coreaudio/audiohardwarecreateprocesstap(_:_:)) on the app's audio, wraps it in a private aggregate device whose real sub-device is your chosen output, and copies the tapped samples into that device's buffers in a realtime IO callback (with the per-app gain applied). The tap mutes the app's original output only while the route is actively pulling audio, and leaked routes from crashes are cleaned up on the next launch — so no app is ever left silently muted.
 
-## Per-tab routing for Chrome
+## Per-tab routing for any Chromium browser — Windows, macOS, Linux
 
-The [AudioRouter Tabs extension](chrome-extension/) extends routing *inside* Chrome: each tab can have its own output device and its own volume (up to 200%) — e.g. two YouTube tabs playing to two different speakers at once. macOS can't distinguish tabs (Chrome mixes them into one process before the OS sees any audio), so this part lives in the browser. See [chrome-extension/README.md](chrome-extension/README.md) for install and usage. Note: remove any whole-Chrome rule in the Mac app while using per-tab routing — the app-level rule captures all Chrome audio and overrides tab-level choices.
+<p align="center">
+  <img src="assets/tabs-popup.png" width="360" alt="AudioRouter Tabs popup routing two tabs to different devices">
+</p>
+
+The [AudioRouter Tabs extension](chrome-extension/) is a **standalone** companion: each browser tab gets its own output device and its own volume (up to 200%) — e.g. two YouTube tabs playing to two different speakers at once. No OS can do this (browsers mix all tabs into one process before the system sees any audio), so this part lives in the browser — and that also means it works **anywhere Chrome does: Windows, macOS, and Linux**, in Chrome, Edge, Brave, or Arc, with no Mac app required. Windows users get what the built-in Volume Mixer can't do; Mac users can pair it with the app above.
+
+See [chrome-extension/README.md](chrome-extension/README.md) for install and usage. Note for Mac-app users: remove any whole-Chrome rule while using per-tab routing — the app-level rule captures all Chrome audio and overrides tab-level choices.
 
 ## Limitations
 

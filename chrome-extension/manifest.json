@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AudioRouter Tabs",
-  "version": "0.1.0",
-  "description": "Route each browser tab to a different output device, with per-tab volume — companion to the AudioRouter Mac app.",
+  "version": "0.2.0",
+  "description": "Give every tab its own output device and volume. Standalone — Windows, macOS, Linux. Companion to the AudioRouter Mac app.",
   "minimum_chrome_version": "116",
   "permissions": ["tabCapture", "offscreen", "tabs"],
   "background": {
